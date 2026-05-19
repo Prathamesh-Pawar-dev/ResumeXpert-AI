@@ -1,6 +1,9 @@
 import streamlit as st
 import pdfplumber
 
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
 # -----------------------------------
 # PAGE CONFIG
 # -----------------------------------
@@ -18,11 +21,11 @@ st.set_page_config(
 st.title("ResumeXpert - Smart ATS Resume Analyzer")
 
 st.write(
-    "Upload your resume and get ATS analysis instantly."
+    "Upload your resume and compare it with the job description."
 )
 
 # -----------------------------------
-# FILE UPLOAD
+# RESUME UPLOAD
 # -----------------------------------
 
 uploaded_file = st.file_uploader(
@@ -31,42 +34,24 @@ uploaded_file = st.file_uploader(
 )
 
 # -----------------------------------
-# SKILLS DATABASE
+# JOB DESCRIPTION INPUT
 # -----------------------------------
 
-skills = [
-    "python",
-    "java",
-    "c++",
-    "sql",
-    "machine learning",
-    "deep learning",
-    "data science",
-    "power bi",
-    "tableau",
-    "excel",
-    "tensorflow",
-    "pandas",
-    "numpy",
-    "scikit-learn",
-    "html",
-    "css",
-    "javascript",
-    "git",
-    "github",
-    "nlp",
-    "streamlit"
-]
+job_description = st.text_area(
+    "Paste Job Description Here"
+)
 
 # -----------------------------------
-# RESUME ANALYSIS
+# START ANALYSIS
 # -----------------------------------
 
-if uploaded_file is not None:
+if uploaded_file is not None and job_description != "":
 
     text = ""
 
-    # Extract Text From PDF
+    # -----------------------------------
+    # EXTRACT TEXT FROM PDF
+    # -----------------------------------
 
     with pdfplumber.open(uploaded_file) as pdf:
 
@@ -75,157 +60,125 @@ if uploaded_file is not None:
             extracted = page.extract_text()
 
             if extracted:
+
                 text += extracted
 
-    # Convert To Lowercase
+    # -----------------------------------
+    # CLEAN TEXT
+    # -----------------------------------
 
     clean_text = text.lower()
 
-    # -----------------------------------
-    # SKILL DETECTION
-    # -----------------------------------
-
-    found_skills = []
-
-    for skill in skills:
-
-        if skill in clean_text:
-
-            found_skills.append(skill)
+    clean_jd = job_description.lower()
 
     # -----------------------------------
-    # SHOW DETECTED SKILLS
+    # EXTRACT KEYWORDS FROM JOB DESCRIPTION
     # -----------------------------------
 
-    st.subheader("Detected Skills")
+    job_keywords = clean_jd.split()
 
-    if len(found_skills) > 0:
+    # Remove duplicates
 
-        for skill in found_skills:
+    job_keywords = list(set(job_keywords))
 
-            st.write("✔", skill)
+    # -----------------------------------
+    # FIND MATCHING KEYWORDS
+    # -----------------------------------
+
+    found_keywords = []
+
+    for word in job_keywords:
+
+        if len(word) > 3 and word in clean_text:
+
+            found_keywords.append(word)
+
+    # -----------------------------------
+    # SHOW MATCHING KEYWORDS
+    # -----------------------------------
+
+    st.subheader("Matching Keywords")
+
+    if len(found_keywords) > 0:
+
+        for keyword in found_keywords:
+
+            st.write("✔", keyword)
 
     else:
 
-        st.warning("No matching skills detected.")
+        st.warning("No matching keywords detected.")
 
     # -----------------------------------
-    # SMART ATS SCORE
+    # ATS MATCH SCORE
     # -----------------------------------
 
-    score = 0
+    documents = [clean_text, clean_jd]
 
-    # Skills Score (40 Marks)
+    tfidf = TfidfVectorizer()
 
-    skills_score = (
-        len(found_skills) / len(skills)
-    ) * 40
+    matrix = tfidf.fit_transform(documents)
 
-    score += skills_score
+    similarity = cosine_similarity(
+        matrix[0:1],
+        matrix[1:2]
+    )
 
-    # Education Score (20 Marks)
-
-    education_keywords = [
-        "bachelor",
-        "engineering",
-        "computer",
-        "degree",
-        "university",
-        "b.tech",
-        "student"
-    ]
-
-    for word in education_keywords:
-
-        if word in clean_text:
-
-            score += 20
-            break
-
-    # Projects Score (20 Marks)
-
-    project_keywords = [
-        "project",
-        "projects",
-        "internship",
-        "developed",
-        "application"
-    ]
-
-    for word in project_keywords:
-
-        if word in clean_text:
-
-            score += 20
-            break
-
-    # Experience Score (20 Marks)
-
-    experience_keywords = [
-        "experience",
-        "internship",
-        "work",
-        "training"
-    ]
-
-    for word in experience_keywords:
-
-        if word in clean_text:
-
-            score += 20
-            break
-
-    # Limit Score To 100
-
-    if score > 100:
-
-        score = 100
+    ats_score = similarity[0][0] * 100
 
     # -----------------------------------
     # SHOW ATS SCORE
     # -----------------------------------
 
-    st.subheader("ATS Score")
+    st.subheader("ATS Match Score")
 
-    st.success(f"{round(score,2)} %")
+    st.success(f"{round(ats_score,2)} %")
 
     # -----------------------------------
-    # RESUME STRENGTH
+    # RESUME EVALUATION
     # -----------------------------------
 
-    st.subheader("Resume Strength")
+    st.subheader("Resume Evaluation")
 
-    if score >= 80:
+    if ats_score >= 80:
 
-        st.success("Strong Resume ✅")
+        st.success("Excellent Match ✅")
 
-    elif score >= 60:
+    elif ats_score >= 60:
 
-        st.warning("Good Resume 👍")
+        st.warning("Good Match 👍")
 
     else:
 
-        st.error("Needs Improvement ⚠")
+        st.error("Low Match ❌")
 
     # -----------------------------------
-    # MISSING SKILLS
+    # MISSING KEYWORDS
     # -----------------------------------
 
-    st.subheader("Recommended Skills To Add")
+    st.subheader("Missing Keywords")
 
-    missing_skills = []
+    missing_keywords = []
 
-    for skill in skills:
+    for word in job_keywords:
 
-        if skill not in found_skills:
+        if len(word) > 3 and word not in clean_text:
 
-            missing_skills.append(skill)
+            missing_keywords.append(word)
 
-    top_missing = missing_skills[:8]
+    if len(missing_keywords) > 0:
 
-    for skill in top_missing:
+        top_missing = missing_keywords[:15]
 
-        st.write("❌", skill)
+        for keyword in top_missing:
+
+            st.write("❌", keyword)
+
+    else:
+
+        st.success(
+            "No major keywords missing."
+        )
 
     # -----------------------------------
     # RESUME TEXT PREVIEW
@@ -242,5 +195,5 @@ if uploaded_file is not None:
 st.markdown("---")
 
 st.caption(
-    "Developed using Python, Streamlit, NLP and Machine Learning"
+    "Developed using Python, NLP, Streamlit and Machine Learning"
 )
