@@ -225,7 +225,15 @@ tech_skills = [
 # START ANALYSIS
 # ---------------------------------------------------
 
-if uploaded_file is not None and job_description != "":
+analyze_button = st.button(
+    "🚀 Analyze Resume"
+)
+
+if (
+    analyze_button
+    and uploaded_file is not None
+    and job_description != ""
+):
 
     text = ""
 
