@@ -4,9 +4,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-
 # ---------------------------------------------------
 # PAGE CONFIG
 # ---------------------------------------------------
@@ -21,6 +18,74 @@ st.set_page_config(
 # CUSTOM CSS
 # ---------------------------------------------------
 
+st.markdown("""
+<style>
+
+/* Main Background */
+
+.stApp {
+
+    background: linear-gradient(
+        to right,
+        #0f172a,
+        #111827
+    );
+
+    color: white;
+}
+
+/* Global Text */
+
+html, body, [class*="css"] {
+
+    color: white !important;
+}
+
+/* Sidebar */
+
+section[data-testid="stSidebar"] {
+
+    background-color: #111827;
+}
+
+/* Metric Cards */
+
+.metric-card {
+
+    background: linear-gradient(
+        135deg,
+        #2563eb,
+        #06b6d4
+    );
+
+    padding: 25px;
+
+    border-radius: 18px;
+
+    text-align: center;
+
+    color: white;
+
+    box-shadow: 0px 6px 25px rgba(0,0,0,0.3);
+}
+
+/* Skill Boxes */
+
+.skill-box {
+
+    background-color: #1e293b;
+
+    padding: 12px;
+
+    border-radius: 12px;
+
+    margin-bottom: 10px;
+
+    border-left: 5px solid #06b6d4;
+
+    color: white;
+}
+
 /* Text Area */
 
 textarea {
@@ -32,7 +97,7 @@ textarea {
     border-radius: 10px !important;
 }
 
-/* Text Area Label */
+/* Input Labels */
 
 label {
 
@@ -66,14 +131,14 @@ input {
     color: white !important;
 }
 
-/* Placeholder Text */
+/* Placeholder */
 
 ::placeholder {
 
     color: #cbd5e1 !important;
 }
 
-/* File Upload Section */
+/* File Upload */
 
 [data-testid="stFileUploader"] {
 
@@ -92,6 +157,52 @@ input {
 
     color: white !important;
 }
+
+/* Button */
+
+.stButton>button {
+
+    background: linear-gradient(
+        135deg,
+        #2563eb,
+        #06b6d4
+    );
+
+    color: white;
+
+    border: none;
+
+    padding: 12px 30px;
+
+    border-radius: 12px;
+
+    font-size: 18px;
+
+    font-weight: bold;
+
+    transition: 0.3s;
+}
+
+.stButton>button:hover {
+
+    transform: scale(1.03);
+
+    background: linear-gradient(
+        135deg,
+        #1d4ed8,
+        #0891b2
+    );
+}
+
+/* Hide Footer */
+
+footer {
+
+    visibility: hidden;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 # ---------------------------------------------------
 # HEADER
@@ -151,7 +262,15 @@ job_description = st.text_area(
 )
 
 # ---------------------------------------------------
-# MASTER SKILL DATABASE
+# ANALYZE BUTTON
+# ---------------------------------------------------
+
+analyze_button = st.button(
+    "🚀 Analyze Resume"
+)
+
+# ---------------------------------------------------
+# MASTER SKILLS DATABASE
 # ---------------------------------------------------
 
 tech_skills = [
@@ -198,7 +317,7 @@ tech_skills = [
     "mysql",
     "mongodb",
 
-    # Cloud & DevOps
+    # Cloud
 
     "aws",
     "azure",
@@ -216,10 +335,6 @@ tech_skills = [
 # ---------------------------------------------------
 # START ANALYSIS
 # ---------------------------------------------------
-
-analyze_button = st.button(
-    "🚀 Analyze Resume"
-)
 
 if (
     analyze_button
@@ -357,13 +472,13 @@ if (
 
     gauge_chart = go.Figure(go.Indicator(
 
-        mode = "gauge+number",
+        mode="gauge+number",
 
-        value = ats_score,
+        value=ats_score,
 
-        title = {'text': "ATS Score"},
+        title={'text': "ATS Score"},
 
-        gauge = {
+        gauge={
 
             'axis': {'range': [0, 100]},
 
@@ -404,13 +519,15 @@ if (
 
         st.error("Low Match ❌")
 
+    st.write("")
+
     # ---------------------------------------------------
     # MATCHED & MISSING SKILLS
     # ---------------------------------------------------
 
     col4, col5 = st.columns(2)
 
-    # MATCHED SKILLS
+    # MATCHED
 
     with col4:
 
@@ -435,7 +552,7 @@ if (
                 "No matching skills found."
             )
 
-    # MISSING SKILLS
+    # MISSING
 
     with col5:
 
@@ -463,7 +580,7 @@ if (
     st.write("")
 
     # ---------------------------------------------------
-    # SKILL DISTRIBUTION CHART
+    # PIE CHART
     # ---------------------------------------------------
 
     st.subheader("📌 Skill Distribution")
@@ -552,7 +669,7 @@ if (
             st.warning(f"⚠ {section} Section Missing")
 
     # ---------------------------------------------------
-    # RESUME TEXT PREVIEW
+    # RESUME PREVIEW
     # ---------------------------------------------------
 
     with st.expander("📄 Resume Preview"):
