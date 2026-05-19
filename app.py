@@ -4,11 +4,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-from sklearn.feature_extraction.text import (
-    TfidfVectorizer,
-    ENGLISH_STOP_WORDS
-)
-
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # ---------------------------------------------------
@@ -28,7 +24,7 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-/* Main Background */
+/* Main App */
 
 .stApp {
     background: linear-gradient(
@@ -41,7 +37,7 @@ st.markdown("""
 
 /* Global Text */
 
-html, body, [class*="css"]  {
+html, body, [class*="css"] {
     color: white;
 }
 
@@ -54,6 +50,7 @@ section[data-testid="stSidebar"] {
 /* Metric Cards */
 
 .metric-card {
+
     background: linear-gradient(
         135deg,
         #2563eb,
@@ -71,9 +68,10 @@ section[data-testid="stSidebar"] {
     box-shadow: 0px 6px 25px rgba(0,0,0,0.3);
 }
 
-/* Skill Box */
+/* Skill Boxes */
 
 .skill-box {
+
     background-color: #1e293b;
 
     padding: 12px;
@@ -137,10 +135,10 @@ st.sidebar.markdown("---")
 st.sidebar.write("### Features")
 
 st.sidebar.write("✅ ATS Match Score")
-st.sidebar.write("✅ Resume Analytics")
-st.sidebar.write("✅ AI Suggestions")
-st.sidebar.write("✅ Skill Analysis")
-st.sidebar.write("✅ Dashboard Visualization")
+st.sidebar.write("✅ Smart Skill Detection")
+st.sidebar.write("✅ Missing Skills Analysis")
+st.sidebar.write("✅ Resume Evaluation")
+st.sidebar.write("✅ Dashboard Analytics")
 
 # ---------------------------------------------------
 # FILE UPLOAD
@@ -161,6 +159,69 @@ job_description = st.text_area(
 )
 
 # ---------------------------------------------------
+# MASTER SKILL DATABASE
+# ---------------------------------------------------
+
+tech_skills = [
+
+    # Programming
+
+    "python",
+    "java",
+    "c++",
+    "javascript",
+    "sql",
+
+    # Data Science
+
+    "machine learning",
+    "deep learning",
+    "data science",
+    "data analysis",
+    "nlp",
+
+    # Libraries
+
+    "pandas",
+    "numpy",
+    "scikit-learn",
+    "tensorflow",
+
+    # Visualization
+
+    "power bi",
+    "tableau",
+    "excel",
+
+    # Development
+
+    "streamlit",
+    "flask",
+    "django",
+    "react",
+    "nodejs",
+
+    # Database
+
+    "mysql",
+    "mongodb",
+
+    # Cloud & DevOps
+
+    "aws",
+    "azure",
+    "docker",
+
+    # Tools
+
+    "git",
+    "github",
+    "uipath",
+    "etl",
+    "automation"
+]
+
+# ---------------------------------------------------
 # START ANALYSIS
 # ---------------------------------------------------
 
@@ -169,7 +230,7 @@ if uploaded_file is not None and job_description != "":
     text = ""
 
     # ---------------------------------------------------
-    # EXTRACT PDF TEXT
+    # PDF TEXT EXTRACTION
     # ---------------------------------------------------
 
     with pdfplumber.open(uploaded_file) as pdf:
@@ -182,121 +243,76 @@ if uploaded_file is not None and job_description != "":
 
                 text += extracted
 
+    # ---------------------------------------------------
+    # CLEAN TEXT
+    # ---------------------------------------------------
+
     clean_text = text.lower()
 
     clean_jd = job_description.lower()
 
     # ---------------------------------------------------
-    # KEYWORD EXTRACTION
+    # EXTRACT JD SKILLS
     # ---------------------------------------------------
 
-    job_keywords = clean_jd.split()
+    jd_skills = []
 
-    job_keywords = list(set(job_keywords))
+    for skill in tech_skills:
 
-    # ---------------------------------------------------
-    # CUSTOM STOPWORDS
-    # ---------------------------------------------------
+        if skill in clean_jd:
 
-    custom_stopwords = {
-
-        "looking",
-        "candidate",
-        "candidates",
-        "ideal",
-        "required",
-        "preferred",
-        "responsibilities",
-        "qualification",
-        "skills",
-        "knowledge",
-        "apply",
-        "related",
-        "degree",
-        "junior",
-        "senior",
-        "teams",
-        "team",
-        "work",
-        "working",
-        "generate",
-        "development",
-        "business",
-        "understanding",
-        "strong",
-        "good",
-        "excellent",
-        "present",
-        "using",
-        "experience",
-        "role",
-        "opportunity",
-        "ability",
-        "problem",
-        "solving",
-        "communication",
-        "management"
-    }
+            jd_skills.append(skill)
 
     # ---------------------------------------------------
-    # FILTER KEYWORDS
+    # EXTRACT RESUME SKILLS
     # ---------------------------------------------------
 
-    filtered_keywords = []
+    resume_skills = []
 
-    for word in job_keywords:
+    for skill in tech_skills:
 
-        if (
-            word not in ENGLISH_STOP_WORDS
-            and word not in custom_stopwords
-            and len(word) > 3
-            and word.isalpha()
-        ):
+        if skill in clean_text:
 
-            filtered_keywords.append(word)
-
-    job_keywords = filtered_keywords
+            resume_skills.append(skill)
 
     # ---------------------------------------------------
-    # MATCHED KEYWORDS
+    # MATCHED SKILLS
     # ---------------------------------------------------
 
-    found_keywords = []
+    matched_skills = []
 
-    for word in job_keywords:
+    for skill in jd_skills:
 
-        if word in clean_text:
+        if skill in resume_skills:
 
-            found_keywords.append(word)
+            matched_skills.append(skill)
 
     # ---------------------------------------------------
-    # MISSING KEYWORDS
+    # MISSING SKILLS
     # ---------------------------------------------------
 
-    missing_keywords = []
+    missing_skills = []
 
-    for word in job_keywords:
+    for skill in jd_skills:
 
-        if word not in clean_text:
+        if skill not in resume_skills:
 
-            missing_keywords.append(word)
+            missing_skills.append(skill)
 
     # ---------------------------------------------------
     # ATS SCORE
     # ---------------------------------------------------
 
-    documents = [clean_text, clean_jd]
+    if len(jd_skills) > 0:
 
-    tfidf = TfidfVectorizer()
+        ats_score = (
+            len(matched_skills)
+            / len(jd_skills)
+        ) * 100
 
-    matrix = tfidf.fit_transform(documents)
+    else:
 
-    similarity = cosine_similarity(
-        matrix[0:1],
-        matrix[1:2]
-    )
-
-    ats_score = similarity[0][0] * 100
+        ats_score = 0
 
     # ---------------------------------------------------
     # DASHBOARD METRICS
@@ -317,7 +333,7 @@ if uploaded_file is not None and job_description != "":
 
         st.markdown(f"""
         <div class="metric-card">
-        <h2>{len(found_keywords)}</h2>
+        <h2>{len(matched_skills)}</h2>
         <p>Matched Skills</p>
         </div>
         """, unsafe_allow_html=True)
@@ -326,7 +342,7 @@ if uploaded_file is not None and job_description != "":
 
         st.markdown(f"""
         <div class="metric-card">
-        <h2>{len(missing_keywords)}</h2>
+        <h2>{len(missing_skills)}</h2>
         <p>Missing Skills</p>
         </div>
         """, unsafe_allow_html=True)
@@ -339,7 +355,7 @@ if uploaded_file is not None and job_description != "":
 
     st.subheader("📊 ATS Match Meter")
 
-    fig = go.Figure(go.Indicator(
+    gauge_chart = go.Figure(go.Indicator(
 
         mode = "gauge+number",
 
@@ -365,7 +381,10 @@ if uploaded_file is not None and job_description != "":
         }
     ))
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(
+        gauge_chart,
+        use_container_width=True
+    )
 
     # ---------------------------------------------------
     # RESUME EVALUATION
@@ -386,71 +405,85 @@ if uploaded_file is not None and job_description != "":
         st.error("Low Match ❌")
 
     # ---------------------------------------------------
-    # KEYWORD ANALYSIS
+    # MATCHED & MISSING SKILLS
     # ---------------------------------------------------
 
     col4, col5 = st.columns(2)
 
-    # MATCHED
+    # MATCHED SKILLS
 
     with col4:
 
-        st.subheader("✅ Matching Keywords")
+        st.subheader("✅ Matched Skills")
 
-        for keyword in found_keywords:
+        if len(matched_skills) > 0:
 
-            st.markdown(
-                f"""
-                <div class='skill-box'>
-                ✔ {keyword}
-                </div>
-                """,
-                unsafe_allow_html=True
+            for skill in matched_skills:
+
+                st.markdown(
+                    f"""
+                    <div class='skill-box'>
+                    ✔ {skill}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        else:
+
+            st.warning(
+                "No matching skills found."
             )
 
-    # MISSING
+    # MISSING SKILLS
 
     with col5:
 
-        st.subheader("❌ Missing Keywords")
+        st.subheader("❌ Missing Skills")
 
-        top_missing = missing_keywords[:15]
+        if len(missing_skills) > 0:
 
-        for keyword in top_missing:
+            for skill in missing_skills:
 
-            st.markdown(
-                f"""
-                <div class='skill-box'>
-                ❌ {keyword}
-                </div>
-                """,
-                unsafe_allow_html=True
+                st.markdown(
+                    f"""
+                    <div class='skill-box'>
+                    ❌ {skill}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        else:
+
+            st.success(
+                "No major skills missing."
             )
 
     st.write("")
 
     # ---------------------------------------------------
-    # PIE CHART
+    # SKILL DISTRIBUTION CHART
     # ---------------------------------------------------
 
     st.subheader("📌 Skill Distribution")
 
-    pie_data = pd.DataFrame({
+    chart_data = pd.DataFrame({
 
         "Category": [
-            "Matched",
-            "Missing"
+            "Matched Skills",
+            "Missing Skills"
         ],
 
         "Count": [
-            len(found_keywords),
-            len(missing_keywords)
+            len(matched_skills),
+            len(missing_skills)
         ]
     })
 
     pie_chart = px.pie(
 
-        pie_data,
+        chart_data,
 
         names="Category",
 
@@ -473,24 +506,24 @@ if uploaded_file is not None and job_description != "":
     if ats_score < 60:
 
         st.info("""
-        Add more technical keywords from the
+        Add more technical skills from the
         job description into your projects,
-        skills, and internship sections.
+        internships, and skills section.
         """)
 
     elif ats_score < 80:
 
         st.info("""
-        Your resume is good but can be improved
-        by adding measurable achievements and
-        more domain-specific keywords.
+        Your resume is good but can be
+        improved with more project-based
+        achievements and technical keywords.
         """)
 
     else:
 
         st.success("""
-        Your resume is highly optimized for
-        this job role.
+        Your resume is highly optimized
+        for this job role.
         """)
 
     # ---------------------------------------------------
@@ -519,10 +552,10 @@ if uploaded_file is not None and job_description != "":
             st.warning(f"⚠ {section} Section Missing")
 
     # ---------------------------------------------------
-    # RESUME PREVIEW
+    # RESUME TEXT PREVIEW
     # ---------------------------------------------------
 
-    with st.expander("📄 Resume Text Preview"):
+    with st.expander("📄 Resume Preview"):
 
         st.write(text[:4000])
 
