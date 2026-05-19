@@ -1,7 +1,11 @@
 import streamlit as st
 import pdfplumber
 
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import (
+    TfidfVectorizer,
+    ENGLISH_STOP_WORDS
+)
+
 from sklearn.metrics.pairwise import cosine_similarity
 
 # -----------------------------------
@@ -10,35 +14,114 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 st.set_page_config(
     page_title="ResumeXpert AI",
-    page_icon="📄",
-    layout="centered"
+    page_icon="🚀",
+    layout="wide"
 )
 
 # -----------------------------------
-# TITLE
+# CUSTOM CSS
 # -----------------------------------
 
-st.title("ResumeXpert - Smart ATS Resume Analyzer")
+st.markdown("""
+<style>
 
-st.write(
-    "Upload your resume and compare it with the job description."
+.stApp {
+    background-color: #0E1117;
+    color: white;
+}
+
+h1, h2, h3, h4 {
+    color: white;
+}
+
+.metric-card {
+    background: linear-gradient(135deg,#1f77ff,#00c6ff);
+    padding: 25px;
+    border-radius: 18px;
+    color: white;
+    text-align: center;
+    box-shadow: 0px 4px 20px rgba(0,0,0,0.3);
+}
+
+.skill-box {
+    background-color: #1c1f26;
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border-left: 5px solid #00c6ff;
+    color: white;
+}
+
+textarea {
+    color: white !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# -----------------------------------
+# HEADER
+# -----------------------------------
+
+st.markdown(
+    """
+    <h1 style='text-align:center;'>
+    🚀 ResumeXpert AI
+    </h1>
+    """,
+    unsafe_allow_html=True
 )
 
+st.markdown(
+    """
+    <h4 style='text-align:center;color:gray;'>
+    Smart ATS Resume Analyzer
+    </h4>
+    """,
+    unsafe_allow_html=True
+)
+
+st.write("")
+
 # -----------------------------------
-# RESUME UPLOAD
+# SIDEBAR
+# -----------------------------------
+
+st.sidebar.title("ResumeXpert AI")
+
+st.sidebar.info(
+    """
+    Upload your resume and compare it
+    with the job description.
+    """
+)
+
+st.sidebar.markdown("---")
+
+st.sidebar.write("### Features")
+
+st.sidebar.write("✅ ATS Match Score")
+st.sidebar.write("✅ Keyword Analysis")
+st.sidebar.write("✅ Missing Skills")
+st.sidebar.write("✅ Resume Evaluation")
+st.sidebar.write("✅ Modern Dashboard")
+
+# -----------------------------------
+# FILE UPLOAD
 # -----------------------------------
 
 uploaded_file = st.file_uploader(
-    "Upload Resume PDF",
+    "📄 Upload Resume PDF",
     type=["pdf"]
 )
 
 # -----------------------------------
-# JOB DESCRIPTION INPUT
+# JOB DESCRIPTION
 # -----------------------------------
 
 job_description = st.text_area(
-    "Paste Job Description Here"
+    "📝 Paste Job Description Here",
+    height=220
 )
 
 # -----------------------------------
@@ -50,7 +133,7 @@ if uploaded_file is not None and job_description != "":
     text = ""
 
     # -----------------------------------
-    # EXTRACT TEXT FROM PDF
+    # PDF TEXT EXTRACTION
     # -----------------------------------
 
     with pdfplumber.open(uploaded_file) as pdf:
@@ -72,45 +155,41 @@ if uploaded_file is not None and job_description != "":
     clean_jd = job_description.lower()
 
     # -----------------------------------
-    # EXTRACT KEYWORDS FROM JOB DESCRIPTION
+    # JOB DESCRIPTION KEYWORDS
     # -----------------------------------
 
     job_keywords = clean_jd.split()
 
-    # Remove duplicates
-
     job_keywords = list(set(job_keywords))
 
+    filtered_keywords = []
+
+    for word in job_keywords:
+
+        if (
+            word not in ENGLISH_STOP_WORDS
+            and len(word) > 3
+            and word.isalpha()
+        ):
+
+            filtered_keywords.append(word)
+
+    job_keywords = filtered_keywords
+
     # -----------------------------------
-    # FIND MATCHING KEYWORDS
+    # MATCHING KEYWORDS
     # -----------------------------------
 
     found_keywords = []
 
     for word in job_keywords:
 
-        if len(word) > 3 and word in clean_text:
+        if word in clean_text:
 
             found_keywords.append(word)
 
     # -----------------------------------
-    # SHOW MATCHING KEYWORDS
-    # -----------------------------------
-
-    st.subheader("Matching Keywords")
-
-    if len(found_keywords) > 0:
-
-        for keyword in found_keywords:
-
-            st.write("✔", keyword)
-
-    else:
-
-        st.warning("No matching keywords detected.")
-
-    # -----------------------------------
-    # ATS MATCH SCORE
+    # ATS SCORE
     # -----------------------------------
 
     documents = [clean_text, clean_jd]
@@ -127,18 +206,76 @@ if uploaded_file is not None and job_description != "":
     ats_score = similarity[0][0] * 100
 
     # -----------------------------------
-    # SHOW ATS SCORE
+    # MISSING KEYWORDS
     # -----------------------------------
 
-    st.subheader("ATS Match Score")
+    missing_keywords = []
 
-    st.success(f"{round(ats_score,2)} %")
+    for word in job_keywords:
+
+        if word not in clean_text:
+
+            missing_keywords.append(word)
+
+    # -----------------------------------
+    # DASHBOARD METRICS
+    # -----------------------------------
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <h2>{round(ats_score,2)}%</h2>
+                <p>ATS Match Score</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with col2:
+
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <h2>{len(found_keywords)}</h2>
+                <p>Matched Keywords</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with col3:
+
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <h2>{len(missing_keywords)}</h2>
+                <p>Missing Keywords</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    st.write("")
+
+    # -----------------------------------
+    # ATS PROGRESS BAR
+    # -----------------------------------
+
+    st.subheader("📊 ATS Match Progress")
+
+    st.progress(int(ats_score))
+
+    st.write("")
 
     # -----------------------------------
     # RESUME EVALUATION
     # -----------------------------------
 
-    st.subheader("Resume Evaluation")
+    st.subheader("📈 Resume Evaluation")
 
     if ats_score >= 80:
 
@@ -152,39 +289,69 @@ if uploaded_file is not None and job_description != "":
 
         st.error("Low Match ❌")
 
+    st.write("")
+
+    # -----------------------------------
+    # MATCHED KEYWORDS
+    # -----------------------------------
+
+    col4, col5 = st.columns(2)
+
+    with col4:
+
+        st.subheader("✅ Matching Keywords")
+
+        if len(found_keywords) > 0:
+
+            for keyword in found_keywords:
+
+                st.markdown(
+                    f"""
+                    <div class='skill-box'>
+                    ✔ {keyword}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        else:
+
+            st.warning("No matching keywords found.")
+
     # -----------------------------------
     # MISSING KEYWORDS
     # -----------------------------------
 
-    st.subheader("Missing Keywords")
+    with col5:
 
-    missing_keywords = []
+        st.subheader("❌ Missing Keywords")
 
-    for word in job_keywords:
+        if len(missing_keywords) > 0:
 
-        if len(word) > 3 and word not in clean_text:
+            top_missing = missing_keywords[:15]
 
-            missing_keywords.append(word)
+            for keyword in top_missing:
 
-    if len(missing_keywords) > 0:
+                st.markdown(
+                    f"""
+                    <div class='skill-box'>
+                    ❌ {keyword}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
-        top_missing = missing_keywords[:15]
+        else:
 
-        for keyword in top_missing:
+            st.success("No major keywords missing.")
 
-            st.write("❌", keyword)
-
-    else:
-
-        st.success(
-            "No major keywords missing."
-        )
+    st.write("")
 
     # -----------------------------------
-    # RESUME TEXT PREVIEW
+    # RESUME PREVIEW
     # -----------------------------------
 
-    with st.expander("View Extracted Resume Text"):
+    with st.expander("📄 View Extracted Resume Text"):
 
         st.write(text[:3000])
 
@@ -195,5 +362,5 @@ if uploaded_file is not None and job_description != "":
 st.markdown("---")
 
 st.caption(
-    "Developed using Python, NLP, Streamlit and Machine Learning"
+    "🚀 Developed using Python • NLP • Streamlit • Machine Learning"
 )
