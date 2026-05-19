@@ -25,35 +25,88 @@ st.set_page_config(
 st.markdown("""
 <style>
 
+/* Main App */
+
 .stApp {
     background-color: #0E1117;
     color: white;
 }
 
-h1, h2, h3, h4 {
+/* Global Text */
+
+html, body, [class*="css"] {
     color: white;
 }
 
-.metric-card {
-    background: linear-gradient(135deg,#1f77ff,#00c6ff);
-    padding: 25px;
-    border-radius: 18px;
+/* Headings */
+
+h1, h2, h3, h4, h5, h6 {
+    color: white !important;
+}
+
+/* Sidebar */
+
+section[data-testid="stSidebar"] {
+    background-color: #161B22;
     color: white;
+}
+
+/* Text Area */
+
+textarea {
+    background-color: #1c1f26 !important;
+    color: white !important;
+    border-radius: 10px;
+}
+
+/* File Uploader */
+
+[data-testid="stFileUploader"] {
+    background-color: #1c1f26;
+    border-radius: 12px;
+    padding: 15px;
+}
+
+/* Metric Cards */
+
+.metric-card {
+    background: linear-gradient(
+        135deg,
+        #1f77ff,
+        #00c6ff
+    );
+
+    padding: 25px;
+
+    border-radius: 18px;
+
+    color: white;
+
     text-align: center;
+
     box-shadow: 0px 4px 20px rgba(0,0,0,0.3);
 }
 
+/* Skill Boxes */
+
 .skill-box {
     background-color: #1c1f26;
+
     padding: 12px;
+
     border-radius: 12px;
+
     margin-bottom: 10px;
+
     border-left: 5px solid #00c6ff;
+
     color: white;
 }
 
-textarea {
-    color: white !important;
+/* Footer */
+
+footer {
+    visibility: hidden;
 }
 
 </style>
@@ -102,9 +155,9 @@ st.sidebar.write("### Features")
 
 st.sidebar.write("✅ ATS Match Score")
 st.sidebar.write("✅ Keyword Analysis")
-st.sidebar.write("✅ Missing Skills")
+st.sidebar.write("✅ Missing Keywords")
 st.sidebar.write("✅ Resume Evaluation")
-st.sidebar.write("✅ Modern Dashboard")
+st.sidebar.write("✅ Smart Dashboard")
 
 # -----------------------------------
 # FILE UPLOAD
@@ -155,7 +208,7 @@ if uploaded_file is not None and job_description != "":
     clean_jd = job_description.lower()
 
     # -----------------------------------
-    # JOB DESCRIPTION KEYWORDS
+    # KEYWORD EXTRACTION
     # -----------------------------------
 
     job_keywords = clean_jd.split()
@@ -189,6 +242,18 @@ if uploaded_file is not None and job_description != "":
             found_keywords.append(word)
 
     # -----------------------------------
+    # MISSING KEYWORDS
+    # -----------------------------------
+
+    missing_keywords = []
+
+    for word in job_keywords:
+
+        if word not in clean_text:
+
+            missing_keywords.append(word)
+
+    # -----------------------------------
     # ATS SCORE
     # -----------------------------------
 
@@ -204,18 +269,6 @@ if uploaded_file is not None and job_description != "":
     )
 
     ats_score = similarity[0][0] * 100
-
-    # -----------------------------------
-    # MISSING KEYWORDS
-    # -----------------------------------
-
-    missing_keywords = []
-
-    for word in job_keywords:
-
-        if word not in clean_text:
-
-            missing_keywords.append(word)
 
     # -----------------------------------
     # DASHBOARD METRICS
@@ -292,10 +345,12 @@ if uploaded_file is not None and job_description != "":
     st.write("")
 
     # -----------------------------------
-    # MATCHED KEYWORDS
+    # MATCHED & MISSING KEYWORDS
     # -----------------------------------
 
     col4, col5 = st.columns(2)
+
+    # MATCHED
 
     with col4:
 
@@ -316,11 +371,11 @@ if uploaded_file is not None and job_description != "":
 
         else:
 
-            st.warning("No matching keywords found.")
+            st.warning(
+                "No matching keywords found."
+            )
 
-    # -----------------------------------
-    # MISSING KEYWORDS
-    # -----------------------------------
+    # MISSING
 
     with col5:
 
@@ -343,15 +398,19 @@ if uploaded_file is not None and job_description != "":
 
         else:
 
-            st.success("No major keywords missing.")
+            st.success(
+                "No major keywords missing."
+            )
 
     st.write("")
 
     # -----------------------------------
-    # RESUME PREVIEW
+    # RESUME TEXT PREVIEW
     # -----------------------------------
 
-    with st.expander("📄 View Extracted Resume Text"):
+    with st.expander(
+        "📄 View Extracted Resume Text"
+    ):
 
         st.write(text[:3000])
 
