@@ -21,85 +21,77 @@ st.set_page_config(
 # CUSTOM CSS
 # ---------------------------------------------------
 
-st.markdown("""
-<style>
-
-/* Main App */
-
-.stApp {
-    background: linear-gradient(
-        to right,
-        #0f172a,
-        #111827
-    );
-    color: white;
-}
-
-/* Global Text */
-
-html, body, [class*="css"] {
-    color: white;
-}
-
-/* Sidebar */
-
-section[data-testid="stSidebar"] {
-    background-color: #111827;
-}
-
-/* Metric Cards */
-
-.metric-card {
-
-    background: linear-gradient(
-        135deg,
-        #2563eb,
-        #06b6d4
-    );
-
-    padding: 25px;
-
-    border-radius: 18px;
-
-    text-align: center;
-
-    color: white;
-
-    box-shadow: 0px 6px 25px rgba(0,0,0,0.3);
-}
-
-/* Skill Boxes */
-
-.skill-box {
-
-    background-color: #1e293b;
-
-    padding: 12px;
-
-    border-radius: 12px;
-
-    margin-bottom: 10px;
-
-    border-left: 5px solid #06b6d4;
-
-    color: white;
-}
-
 /* Text Area */
 
 textarea {
+
     background-color: #1e293b !important;
+
+    color: white !important;
+
+    border-radius: 10px !important;
+}
+
+/* Text Area Label */
+
+label {
+
     color: white !important;
 }
 
-/* Hide Footer */
+/* Input Box */
 
-footer {
-    visibility: hidden;
+input {
+
+    background-color: #1e293b !important;
+
+    color: white !important;
 }
 
-</style>
-""", unsafe_allow_html=True)
+/* Streamlit Text Input */
+
+.stTextInput>div>div>input {
+
+    background-color: #1e293b !important;
+
+    color: white !important;
+}
+
+/* Streamlit Text Area */
+
+.stTextArea textarea {
+
+    background-color: #1e293b !important;
+
+    color: white !important;
+}
+
+/* Placeholder Text */
+
+::placeholder {
+
+    color: #cbd5e1 !important;
+}
+
+/* File Upload Section */
+
+[data-testid="stFileUploader"] {
+
+    background-color: #1e293b !important;
+
+    color: white !important;
+
+    border-radius: 12px;
+
+    padding: 15px;
+}
+
+/* Uploaded File Text */
+
+[data-testid="stFileUploader"] * {
+
+    color: white !important;
+}
 
 # ---------------------------------------------------
 # HEADER
